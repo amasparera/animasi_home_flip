@@ -1,0 +1,66 @@
+orderTravel(
+  TravelAsuransi travelAsuransi,
+  TravelDataModels travelDataModels,
+  TravelDataTransaksi travelDataTransaksi,
+) async {
+  var headers = await ApiCollection.headerLogin();
+  Uri api = Uri.parse(ApiCollection.orderPembayaranTravel);
+  var request = http.MultipartRequest("POST", api);
+  request.headers["x-api-key"] = headers["x-api-key"]!;
+  request.headers["x-token"] = headers["x-token"]!;
+
+  // data
+  request.fields["diskon"] = "";
+  request.fields["hargasblmdiskon"] = travelAsuransi.asuransiTotalPremi;
+  request.fields["hargastelahdiskon"] = travelAsuransi.asuransiTotalPremi;
+  request.fields["d_trans_travel_jenis_id"] =
+      travelDataModels.travelJenisPerjalanan ?? "";
+  request.fields["d_trans_travel_negara_id"] =
+      travelDataModels.negaraTujuan ?? "";
+  request.fields["d_trans_travel_jenis_perlindungan_id"] =
+      travelDataModels.jenisPerlindungan ?? "";
+  request.fields["d_trans_travel_tipe_peserta_id"] =
+      travelDataModels.travelTipePeserta ?? "";
+  request.fields["d_trans_travel_jumlah_peserta"] =
+      travelDataModels.travelTipePeserta ?? "";
+  request.fields["d_trans_travel_tgl_berangkat"] =
+      travelDataModels.tanggalBerangkat ?? "";
+  request.fields["d_trans_travel_produk_id"] =
+      travelDataModels.tanggalKembali ?? "";
+  request.fields["d_trans_travel_epolis"] = "1";
+  request.fields["d_trans_travel_cetak_buku"] = "1";
+  request.fields["d_trans_travel_setuju_sk"] = "1";
+  request.fields["d_trans_travel_penerima_manfaat_id"] = "1";
+  request.fields["d_trans_travel_nama_ahliwaris"] =
+      travelDataTransaksi.namaAhliWaris!;
+  request.fields["d_trans_travel_tgl_lahir_ahliwaris"] =
+      travelDataTransaksi.tglLahir!;
+  request.fields["d_trans_travel_data[0][d_trans_travel_nama]"] =
+      travelDataTransaksi.namaAhliWaris!;
+  request.fields["d_trans_travel_data[0][d_trans_travel_tgl_lahir]"] =
+      travelDataTransaksi.tglLahir!;
+  request.fields["d_trans_travel_data[0][d_trans_travel_email]"] =
+      travelDataTransaksi.email!;
+
+// ktp
+  http.MultipartFile ktp = await http.MultipartFile.fromPath(
+      'd_trans_travel_passport', travelDataTransaksi.ktp!.path);
+  request.files.add(ktp);
+
+// pasport
+  http.MultipartFile pasport = await http.MultipartFile.fromPath(
+      'd_trans_travel_passport', travelDataTransaksi.passport!.path);
+  request.files.add(pasport);
+
+  inspect(request);
+  await request.send().then((response) async {
+    log("data ${response.statusCode}");
+    response.stream.transform(utf8.decoder).listen((value) {
+      // print(value);
+      var data = json.decode(value);
+      log(data);
+    });
+  }).catchError((e) {
+    print(e);
+  });
+}
